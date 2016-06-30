@@ -2,12 +2,12 @@
 
 require_once('params.php');
 
-$isset  = "";
 $chain  = "kernel {$url}bin/install_centos6/vmlinuz ip=\${ks_ipaddr} netmask=\${ks_netmask} ";
 $chain .= "gateway=\${ks_gateway} dns=\${ks_dns} KS_HOSTNAME=\${ks_hostname} ks=\${ks_file}\n";
 $chain .= "initrd {$url}bin/install_centos6/initrd.img\n";
 $chain .= "boot\n";
 
+echo "set use_dhcp No\n";
 echo "set ks_dns 10.0.0.1,10.0.0.2\n";
 echo "set ks_file http://path/to/kickstart/file.cfg\n";
 echo ":submenu\n";
@@ -21,9 +21,12 @@ foreach ($network_info as $k => $v) {
 echo "item --gap\n";
 
 item("...", "up", "menu.php", "p");
+item_ks(ks_name_offset("Use DHCP", "use_dhcp"), "dhcp",
+    "dhcp && set use_dhcp Yes && set ks_ipaddr \${ip} && set ks_netmask \${netmask} && set ks_gateway \${gateway} && goto submenu || goto submenu", "p");
+
 foreach ($ks_cfg as $k => $v) {
     item_ks(ks_name_offset($v, $k), $k, "echo -n Set {$v}: \${} && read {$k} && goto submenu", "p");
-    $isset .= "isset \${{$k}} && ";
+    $isset = "isset \${{$k}} && ";
 }
 echo "item --gap\n";
 item_ks("Start Installation", "install_centos6", "{$isset} goto install || goto submenu", "p");
